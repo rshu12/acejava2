@@ -43,7 +43,11 @@ public class WatchDirectoryRecursively {
 		Files.walk(dir).filter(Files::isRegularFile).forEach(pathName -> {
 			if (matcher.matches(pathName.getFileName())) {
 				System.out.println(pathName);
-				blockingQueue.add(pathName);
+				try {
+					blockingQueue.put(pathName);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 			}
 		});
 	}
@@ -96,7 +100,8 @@ public class WatchDirectoryRecursively {
 				System.err.println("WatchKey not recognized!!");
 //				blockingQueue.notifyAll();
 //				Thread.currentThread().interrupt();
-				continue;
+//				continue;
+				break;
 			}
 
 			for (WatchEvent<?> event : key.pollEvents()) {
@@ -114,8 +119,12 @@ public class WatchDirectoryRecursively {
 
 					System.out.println(filename.lastModified());
 //					System.out.println("Child::" + name);
-					blockingQueue.add(child);
-					blockingQueue.notifyAll();
+					try {
+						blockingQueue.put(child);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+//					blockingQueue.notifyAll();
 					System.out.println("Later BLocking Queue"+blockingQueue);
 				}
 				// if directory is created, and watching recursively, then
@@ -129,7 +138,7 @@ public class WatchDirectoryRecursively {
 						// do something useful
 					}
 				}
-				blockingQueue.notifyAll();
+//				blockingQueue.notifyAll();
 			}
 
 			// reset key and remove from set if directory no longer accessible
